@@ -8,6 +8,7 @@ public class GamePlay : MonoBehaviour {
   public GameObject platform;         // The platform where the player stands
   private Vector3 platformSurface;    // Needed to position the ball onto the platform
 
+
   // Use this for initialization
   void Start() 
   {
@@ -36,8 +37,21 @@ public class GamePlay : MonoBehaviour {
 
     // Set the properties of the ball to position it on specific place on the platform
     float radius = ball.GetComponent<SphereCollider>().radius;
-    ball.GetComponent<Rigidbody>().isKinematic = false;
+    ball.GetComponent<Rigidbody>().isKinematic = true;
     ball.GetComponent<Rigidbody>().useGravity = true;
     ball.transform.position = new Vector3(ball.transform.position.x, ball.transform.position.y + radius, ball.transform.position.z + 0.5f);
+  }
+
+  // Grabs the ball
+  public void GrabBall(Collider col, GameObject parent) 
+  {
+    Debug.Log("GRAB BALL");
+    //col.transform.SetParent();
+  }
+
+  // Throws the ball
+  public void ThrowBall(Collider col, GameObject parent) 
+  {
+    Debug.Log("THROW BALL");
   }
 }

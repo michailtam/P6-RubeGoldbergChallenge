@@ -4,8 +4,16 @@ using UnityEngine;
 
 public class ControllerInputManager : MonoBehaviour {
 
-  private SteamVR_TrackedObject trackedObject;   // The tracked objects in the scene (one HMD and two controllers)
-  private SteamVR_Controller.Device device;      // The current device
+  // HTC Vive Controllers 
+  private SteamVR_TrackedObject trackedObject;        // The tracked objects in the scene (one HMD and two controllers)
+  private SteamVR_Controller.Device leftController;   // The left controller device
+  private SteamVR_Controller.Device rightController;  // The right controller device
+  int leftIndex;    // The left controller index
+  int rightIndex;   // The right controller index
+  private GameObject rightControllerObject;    // The right controller game object
+
+  // Game play
+  public GamePlay gamePlay;               // Game play script of the GamePlay game object
 
   // Teleporter
   private LineRenderer laser;             // The laser pointer
@@ -31,6 +39,12 @@ public class ControllerInputManager : MonoBehaviour {
   // Use this for initialization
   void Start () 
   {
+    rightControllerObject = GameObject.Find("Controller (right)");
+    Debug.Log("Controller: " + rightControllerObject);
+
+    // Determines which controller is left and which one is right
+    InitControllers();
+
     // Gets the correct tracked object component
     trackedObject = GetComponent<SteamVR_TrackedObject>();
     laser = GetComponentInChildren<LineRenderer>();
@@ -39,17 +53,23 @@ public class ControllerInputManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
   {
-    // Gets the intended tracked controller by the index
-    device = SteamVR_Controller.Input((int)trackedObject.index);
-
     Movement();       // Manages the movement of the player
+  }
+
+  // Initializes the controllers
+  private void InitControllers() 
+  {
+    leftIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.Leftmost);
+    rightIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.Rightmost);
+    leftController = SteamVR_Controller.Input(leftIndex);
+    rightController = SteamVR_Controller.Input(rightIndex);
   }
 
   // Movement management
   private void Movement() 
   {
     // Natural walking movement
-    if (device.GetPress(SteamVR_Controller.ButtonMask.Grip)) {
+    if (leftController.GetPress(SteamVR_Controller.ButtonMask.Grip)) {
       movementDirection = playerCam.transform.forward;
       // Prevent to fly while walking
       movementDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
@@ -73,8 +93,10 @@ public class ControllerInputManager : MonoBehaviour {
     else 
     {
       // If the trigger of the controller gets pressed
-      if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      if (leftController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
       {
+        if (laser == null) return;
+
         // Show the laser pointer and the teleport aimer object
         laser.gameObject.SetActive(true);
         teleportTarget.SetActive(true);
@@ -86,7 +108,6 @@ public class ControllerInputManager : MonoBehaviour {
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) 
         {
-          Debug.Log("TELEPORT");
           teleportLocation = hit.point;   // Records where the laser hits
           laser.SetPosition(1, teleportLocation);   // Sets the end point of the laser pointer
           teleportTarget.transform.position = new Vector3(
@@ -111,13 +132,14 @@ public class ControllerInputManager : MonoBehaviour {
 
           // Sets the teleport aimer position
           teleportTarget.transform.position = teleportLocation /*+ new Vector3(0, yNudgeAmount, 0)*/;
-          Debug.Log("NOTHING " + teleportTarget.transform.position);
         }
       }
 
       // If the trigger of the controller gets released
-      if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      if (leftController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
       {
+        if (laser == null) return;
+
         // Hide the laser pointer and the teleport aimer object
         laser.gameObject.SetActive(false);
         teleportTarget.SetActive(false);
@@ -132,31 +154,20 @@ public class ControllerInputManager : MonoBehaviour {
   // Gets invoked till the foreign object exits the collider
   private void OnTriggerStay(Collider col) 
   {
+    Debug.Log("PARENT: " + this);
     // If the collided foreign object is a ball
-    if (col.gameObject.CompareTag("Throwable")) 
+    if (col.gameObject.CompareTag("Ball")) 
     {
       // Grabs the ball
-      if(device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      if(rightController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
       {
-        GrabBall(col);
+        gamePlay.GrabBall(col, rightControllerObject);
       }
       // Throws the ball
-      else if(device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      else if(rightController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
       {
-        ThrowBall(col);
+        gamePlay.ThrowBall(col, rightControllerObject);
       }  
     }
-  }
-
-  // Grabs the ball
-  private void GrabBall(Collider col) 
-  {
-
-  }
-
-  // Throws the ball
-  private void ThrowBall(Collider col) 
-  {
-
   }
 }
