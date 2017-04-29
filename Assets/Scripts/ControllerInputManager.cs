@@ -9,7 +9,7 @@ public class ControllerInputManager : MonoBehaviour {
 
   // Teleporter
   private LineRenderer laser;             // The laser pointer
-  public GameObject teleportAimerObject;  // Indicator that shows were we get teleport to
+  public GameObject teleportTarget;       // Indicator that shows were we get teleport to
   public Vector3 teleportLocation;        // Determines the 3d position the player gets teleport to
   public GameObject player;               // The player
   public LayerMask laserMask;             // This allows us to choose which layers the teleport raycast can collide with
@@ -27,6 +27,7 @@ public class ControllerInputManager : MonoBehaviour {
   public float moveSpeed = 4f;            // Determines the walking speed
   private Vector3 movementDirection;      // Determines the direction the player is moving
 
+  
   // Use this for initialization
   void Start () 
   {
@@ -41,9 +42,14 @@ public class ControllerInputManager : MonoBehaviour {
     // Gets the intended tracked controller by the index
     device = SteamVR_Controller.Input((int)trackedObject.index);
 
+    Movement();       // Manages the movement of the player
+  }
+
+  // Movement management
+  private void Movement() 
+  {
     // Natural walking movement
-    if(device.GetPress(SteamVR_Controller.ButtonMask.Grip)) 
-    {
+    if (device.GetPress(SteamVR_Controller.ButtonMask.Grip)) {
       movementDirection = playerCam.transform.forward;
       // Prevent to fly while walking
       movementDirection = new Vector3(movementDirection.x, 0, movementDirection.z);
@@ -53,45 +59,49 @@ public class ControllerInputManager : MonoBehaviour {
     }
 
     // Move the player smooth to the teleport location
-    if(isDashing) 
+    if (isDashing) 
     {
       lerpTime += Time.deltaTime * dashSpeed;
       player.transform.position = Vector3.Lerp(dashStartPosition, teleportLocation, lerpTime);
-      
+
       // Checks if the player has reached the intended location
-      if (lerpTime >= 1) 
-      {
+      if (lerpTime >= 1) {
         isDashing = false;
         lerpTime = 0;
       }
-    }
+    } 
     else 
     {
       // If the trigger of the controller gets pressed
-      if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) {
+      if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
         // Show the laser pointer and the teleport aimer object
         laser.gameObject.SetActive(true);
-        teleportAimerObject.SetActive(true);
+        teleportTarget.SetActive(true);
 
         // Sets the start point of the laser pointer
         laser.SetPosition(0, gameObject.transform.position);
 
         // Determin the teleport location by the range and the layer mask
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) {
+        if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) 
+        {
+          Debug.Log("TELEPORT");
           teleportLocation = hit.point;   // Records where the laser hits
           laser.SetPosition(1, teleportLocation);   // Sets the end point of the laser pointer
-          teleportAimerObject.transform.position = new Vector3(
+          teleportTarget.transform.position = new Vector3(
             teleportLocation.x, teleportLocation.y + yNudgeAmount, teleportLocation.z);
         }
         // If the laser pointer hits nothing
-        else {
+        else 
+        {
           // Moves the indicator forward the range relative to the controller  
           teleportLocation = transform.position + transform.forward * teleportRange;
 
           // Determine where the ground is to set the indicator onto
           RaycastHit groundRay;
-          if (Physics.Raycast(teleportLocation, -Vector3.up, out groundRay, 17, laserMask)) {
+          if (Physics.Raycast(teleportLocation, -Vector3.up, out groundRay, 17, laserMask)) 
+          {
             teleportLocation = new Vector3(
               transform.position.x + transform.forward.x * teleportRange,
               groundRay.point.y,
@@ -100,19 +110,53 @@ public class ControllerInputManager : MonoBehaviour {
           laser.SetPosition(1, transform.position + transform.forward * teleportRange);
 
           // Sets the teleport aimer position
-          teleportAimerObject.transform.position = teleportLocation + new Vector3(0, yNudgeAmount, 0);
+          teleportTarget.transform.position = teleportLocation /*+ new Vector3(0, yNudgeAmount, 0)*/;
+          Debug.Log("NOTHING " + teleportTarget.transform.position);
         }
       }
+
       // If the trigger of the controller gets released
-      if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
+      if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
         // Hide the laser pointer and the teleport aimer object
         laser.gameObject.SetActive(false);
-        teleportAimerObject.SetActive(false);
+        teleportTarget.SetActive(false);
 
         // Trigger the dashing
         dashStartPosition = player.transform.position;
         isDashing = true;
       }
-    }   
+    }
+  }
+
+  // Gets invoked till the foreign object exits the collider
+  private void OnTriggerStay(Collider col) 
+  {
+    // If the collided foreign object is a ball
+    if (col.gameObject.CompareTag("Throwable")) 
+    {
+      // Grabs the ball
+      if(device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
+        GrabBall(col);
+      }
+      // Throws the ball
+      else if(device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
+        ThrowBall(col);
+      }  
+    }
+  }
+
+  // Grabs the ball
+  private void GrabBall(Collider col) 
+  {
+
+  }
+
+  // Throws the ball
+  private void ThrowBall(Collider col) 
+  {
+
   }
 }
