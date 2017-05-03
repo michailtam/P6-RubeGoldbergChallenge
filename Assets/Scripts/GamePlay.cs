@@ -4,19 +4,20 @@ using UnityEngine;
 
 public class GamePlay : MonoBehaviour {
 
-  public GameObject ballPref;         // The ball prefab
-  public GameObject platform;         // The platform where the player stands
-  private Vector3 platformSurface;    // Needed to position the ball onto the platform
+  public GameObject ballPref;           // The ball prefab
+  public GameObject platform;           // The platform game object
+  public GameObject pedastal;           // The pedastal game object
+  private Vector3 platformSurface;      // Needed to position the ball onto the platform
 
 
   // Use this for initialization
   void Start() 
   {
-    CalcPlatformSurface();
+    CalcSpawnPoint();
   }
 
-  // Calculates the platforms surface center
-  private void CalcPlatformSurface() 
+  // Calculates the spawn point of the ball
+  private void CalcSpawnPoint() 
   {
     // Shoots a 5m ray downwards from 2m centered above the platform to determine the
     // center point of the surface of the platform
@@ -36,10 +37,9 @@ public class GamePlay : MonoBehaviour {
     GameObject ball = Instantiate(ballPref, platformSurface, Quaternion.identity);
 
     // Set the properties of the ball to position it on specific place on the platform
-    float radius = ball.GetComponent<SphereCollider>().radius;
-    ball.GetComponent<Rigidbody>().isKinematic = true;
-    ball.GetComponent<Rigidbody>().useGravity = true;
-    ball.transform.position = new Vector3(ball.transform.position.x, ball.transform.position.y + radius, ball.transform.position.z + 0.5f);
+    ball.GetComponent<Rigidbody>().isKinematic = false;   // Allows the physics of the ball to be used by Unity
+    ball.GetComponent<Rigidbody>().useGravity = true;     // Lets the ball drop onto the platform
+    ball.transform.position = new Vector3(ball.transform.position.x, ball.transform.position.y + 0.5f, ball.transform.position.z + 0.85f);
   }
 
   // Grabs the ball
