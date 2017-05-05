@@ -40,7 +40,6 @@ public class ControllerInputManager : MonoBehaviour {
   void Start () 
   {
     rightControllerObject = GameObject.Find("Controller (right)");
-    Debug.Log("Controller: " + rightControllerObject);
 
     // Determines which controller is left and which one is right
     InitControllers();
@@ -56,7 +55,7 @@ public class ControllerInputManager : MonoBehaviour {
     Movement();       // Manages the movement of the player
   }
 
-  // Initializes the controllers
+  // Initializes the vive controllers
   private void InitControllers() 
   {
     leftIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.Leftmost);
@@ -104,14 +103,14 @@ public class ControllerInputManager : MonoBehaviour {
         // Sets the start point of the laser pointer
         laser.SetPosition(0, gameObject.transform.position);
 
-        // Determin the teleport location by the range and the layer mask
+        // Determin the teleport location by the range and the layer mask (laser hits the ground)
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) 
         {
           teleportLocation = hit.point;   // Records where the laser hits
           laser.SetPosition(1, teleportLocation);   // Sets the end point of the laser pointer
           teleportTarget.transform.position = new Vector3(
-            teleportLocation.x, teleportLocation.y + yNudgeAmount, teleportLocation.z);
+            teleportLocation.x, teleportLocation.y /*+ yNudgeAmount*/, teleportLocation.z);
         }
         // If the laser pointer hits nothing
         else 
@@ -154,19 +153,18 @@ public class ControllerInputManager : MonoBehaviour {
   // Gets invoked till the foreign object exits the collider
   private void OnTriggerStay(Collider col) 
   {
-    Debug.Log("PARENT: " + this);
     // If the collided foreign object is a ball
     if (col.gameObject.CompareTag("Ball")) 
     {
       // Grabs the ball
       if(rightController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
       {
-        gamePlay.GrabBall(col, rightControllerObject);
+        gamePlay.GrabBall(col, rightControllerObject, rightController);
       }
       // Throws the ball
       else if(rightController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
       {
-        gamePlay.ThrowBall(col, rightControllerObject);
+        gamePlay.ThrowBall(col, rightControllerObject, rightController);
       }  
     }
   }

@@ -7,8 +7,8 @@ public class GamePlay : MonoBehaviour {
   public GameObject ballPref;           // The ball prefab
   public GameObject platform;           // The platform game object
   public GameObject pedastal;           // The pedastal game object
+  public float throwForce = 1.5f;       // The force to throw the ball
   private Vector3 platformSurface;      // Needed to position the ball onto the platform
-
 
   // Use this for initialization
   void Start() 
@@ -43,15 +43,20 @@ public class GamePlay : MonoBehaviour {
   }
 
   // Grabs the ball
-  public void GrabBall(Collider col, GameObject parent) 
+  public void GrabBall(Collider col, GameObject parent, SteamVR_Controller.Device device) 
   {
-    Debug.Log("GRAB BALL");
-    //col.transform.SetParent();
+    col.transform.SetParent(parent.transform);
+    col.GetComponent<Rigidbody>().isKinematic = true;
+    device.TriggerHapticPulse(500);
   }
 
   // Throws the ball
-  public void ThrowBall(Collider col, GameObject parent) 
+  public void ThrowBall(Collider col, GameObject parent, SteamVR_Controller.Device device) 
   {
-    Debug.Log("THROW BALL");
+    col.transform.SetParent(null);
+    Rigidbody rig = col.GetComponent<Rigidbody>();
+    rig.isKinematic = false;
+    rig.velocity = device.velocity * throwForce;
+    rig.angularVelocity = device.angularVelocity;
   }
 }
