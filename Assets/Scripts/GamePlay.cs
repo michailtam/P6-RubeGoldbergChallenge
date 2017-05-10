@@ -47,7 +47,6 @@ public class GamePlay : MonoBehaviour {
   {
     col.transform.SetParent(parent.transform);
     col.GetComponent<Rigidbody>().isKinematic = true;
-    device.TriggerHapticPulse(500);
   }
 
   // Throws the ball

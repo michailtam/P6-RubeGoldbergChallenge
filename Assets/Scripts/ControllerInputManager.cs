@@ -2,6 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
+
 
 public class ControllerInputManager : MonoBehaviour {
 
@@ -51,20 +53,23 @@ public class ControllerInputManager : MonoBehaviour {
   }
 
   // Update is called once per frame
-  void Update() {
+  void Update()
+  {
     Movement();       // Manages the movement of the player
   }
 
   // Initializes the vive controllers
-  private void InitControllers() {
-    leftIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.Leftmost);
-    rightIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.Rightmost);
+  private void InitControllers()
+  {
+    leftIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.FarthestLeft);
+    rightIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.FarthestRight);
     leftController = SteamVR_Controller.Input(leftIndex);
-    rightController = SteamVR_Controller.Input(rightIndex);
+    rightController = SteamVR_Controller.Input(rightIndex); 
   }
 
   // Movement management
-  private void Movement() {
+  private void Movement()
+  {
     // Natural walking movement
     if (leftController.GetPress(SteamVR_Controller.ButtonMask.Grip)) {
       movementDirection = playerCam.transform.forward;
@@ -85,12 +90,12 @@ public class ControllerInputManager : MonoBehaviour {
         isDashing = false;
         lerpTime = 0;
       }
-    } else {
-      // Set the origin color for the laser pointer
-      laser.material = laserPointerColor;
-      
+    }
+    else 
+    {
       // If the trigger of the controller gets pressed
-      if (leftController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) {
+      if (leftController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
         if (laser == null) return;
 
         // Show the laser pointer and the teleport aimer object
@@ -100,53 +105,61 @@ public class ControllerInputManager : MonoBehaviour {
         // Sets the start point of the laser pointer
         laser.SetPosition(0, gameObject.transform.position);
 
-        RaycastHit hit;
+        // VERY IMPORTANT: The Unity doc https://docs.unity3d.com/ScriptReference/Physics.RaycastAll.html notice that the returned
+        // order of the array objects is not guaranteed. So we order them ourself by the distance
+        RaycastHit[] hits = Physics.RaycastAll(transform.position, transform.forward, teleportRange).OrderBy(h=>h.distance).ToArray();
 
-        // Determines if the the ray points to the building structure
-        int count = 0;
-        float hitDistance = 0f;
-        RaycastHit[] hits = Physics.RaycastAll(transform.position, transform.forward, teleportRange);
-        foreach (RaycastHit h in hits) {
-          if(h.transform.CompareTag("Ground") | h.transform.CompareTag("Restricted")) {
-            if (h.transform.CompareTag("Restricted"))
-              hitDistance = h.distance;
-            count++;
-          }
+        // Check if the pointer points direct onto the restricted point
+        for (int i = 0; i < hits.Length; i++) {
+          if (hits[0].transform.CompareTag("Restricted")) 
+          {
+            laser.SetPosition(1, transform.position + transform.forward * (hits[0].distance));
+            laser.material = restrictedColor;
+
+            RaycastHit hitGround;
+            if (Physics.Raycast(transform.position, -Vector3.up, out hitGround, 10, laserMask)) {
+              teleportTarget.transform.position = player.transform.position;
+              teleportLocation = player.transform.position;
+              dashStartPosition = player.transform.position;
+              leftController.TriggerHapticPulse();
+            }
+            return;
+          }  
         }
 
-        // If the user points to building structure
-        if (count == 1) {
-          laser.SetPosition(1, transform.position + transform.forward * hitDistance);
-          laser.material = restrictedColor;
+        // Check if the teleport target is in restricted area
+        
 
-          RaycastHit hitGround;
-          if (Physics.Raycast(transform.position, -Vector3.up, out hitGround, 10, laserMask)) {
-            teleportTarget.transform.position = player.transform.position;
-            teleportLocation = player.transform.position;
-            dashStartPosition = player.transform.position;
-          }
-        }
 
         // Determines the teleport location by the range and the layer mask (laser hits the ground)
-        else if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) {
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) 
+        {
+          if (hit.collider.gameObject.CompareTag("Restricted"))
+            Debug.Log("RESTRICTED");
+
           teleportLocation = hit.point;   // Records where the laser hits
           laser.SetPosition(1, teleportLocation);   // Sets the end point of the laser pointer
+          laser.material = laserPointerColor;
           teleportTarget.transform.position = teleportLocation;
         }
         // If the laser pointer hits nothing
-        else {
+        else 
+        {
           // Moves the indicator forward the range relative to the controller  
           teleportLocation = transform.position + transform.forward * teleportRange;
 
           // Determines where the ground is to set the indicator onto
           RaycastHit groundRay;
-          if (Physics.Raycast(teleportLocation, -Vector3.up, out groundRay, 17, laserMask)) {
+          if (Physics.Raycast(teleportLocation, -Vector3.up, out groundRay, 17, laserMask)) 
+          {
             teleportLocation = new Vector3(
               transform.position.x + transform.forward.x * teleportRange,
               groundRay.point.y,
               transform.position.z + transform.forward.z * teleportRange);
           }
           laser.SetPosition(1, transform.position + transform.forward * teleportRange);
+          laser.material = laserPointerColor;
 
           // Sets the teleport aimer position
           teleportTarget.transform.position = teleportLocation;
@@ -154,7 +167,8 @@ public class ControllerInputManager : MonoBehaviour {
       }
 
       // If the trigger of the controller gets released
-      if (leftController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
+      if (leftController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
         if (laser == null) return;
 
         // Hide the laser pointer and the teleport aimer object
@@ -169,15 +183,19 @@ public class ControllerInputManager : MonoBehaviour {
   }
 
   // Gets invoked till the foreign object exits the collider
-  private void OnTriggerStay(Collider col) {
+  private void OnTriggerStay(Collider col)
+  {
     // If the collided foreign object is a ball
-    if (col.gameObject.CompareTag("Ball")) {
+    if (col.gameObject.CompareTag("Ball")) 
+    {
       // Grabs the ball
-      if (rightController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) {
+      if (rightController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
         gamePlay.GrabBall(col, rightControllerObject, rightController);
       }
       // Throws the ball
-      else if (rightController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
+      else if (rightController.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      {
         gamePlay.ThrowBall(col, rightControllerObject, rightController);
       }
     }
