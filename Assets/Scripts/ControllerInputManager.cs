@@ -5,7 +5,8 @@ using UnityEngine;
 using System.Linq;
 
 
-public class ControllerInputManager : MonoBehaviour {
+public class ControllerInputManager : MonoBehaviour
+{
 
   // HTC Vive Controllers 
   private SteamVR_TrackedObject trackedObject;        // The tracked objects in the scene (one HMD and two controllers)
@@ -13,7 +14,7 @@ public class ControllerInputManager : MonoBehaviour {
   private SteamVR_Controller.Device rightController;  // The right controller device
   int leftIndex;    // The left controller index
   int rightIndex;   // The right controller index
-  private GameObject rightControllerObject;    // The right controller game object
+  private GameObject rightControllerObject;           // The right controller game object
 
   // Game play
   public GamePlay gamePlay;               // Game play script of the GamePlay game object
@@ -39,6 +40,16 @@ public class ControllerInputManager : MonoBehaviour {
   public float moveSpeed = 4f;            // Determines the walking speed
   private Vector3 movementDirection;      // Determines the direction the player is moving
 
+  // Swiping
+  public ObjectMenuManager objectMenuManager; // The menu manager object
+  private float swipeSum;                 // The calculated swipe sum
+  private float touchLast;                // The last touch position onto the axis of the controller
+  private float touchCurrent;             // The new swipe position onto the axis of the controller  
+  private float distance;                 // The calculated distance of the touch position
+  private bool hasSwipedLeft;             // Prevents from unwanted swiping to the left 
+  private bool hasSwipedRight;            // Prevents from unwanted swiping to the right
+  private bool isMenuVisible = false;     // Determines if the object menu is visible
+
 
   // Use this for initialization
   void Start() {
@@ -55,7 +66,8 @@ public class ControllerInputManager : MonoBehaviour {
   // Update is called once per frame
   void Update()
   {
-    Movement();       // Manages the movement of the player
+    Movement();         // Manages the movement of the player
+    ManageObjectMenu(); // Manages the menu objects
   }
 
   // Initializes the vive controllers
@@ -65,6 +77,69 @@ public class ControllerInputManager : MonoBehaviour {
     rightIndex = SteamVR_Controller.GetDeviceIndex(SteamVR_Controller.DeviceRelation.FarthestRight);
     leftController = SteamVR_Controller.Input(leftIndex);
     rightController = SteamVR_Controller.Input(rightIndex); 
+  }
+
+  // Manages the object menu
+  private void ManageObjectMenu()
+  {
+    // Toggle the object menu
+    if(rightController.GetPressDown(SteamVR_Controller.ButtonMask.Grip)) {
+      isMenuVisible = !isMenuVisible;
+      objectMenuManager.gameObject.SetActive(isMenuVisible);
+    }
+
+    // Manage the object menu if and only if the menu is visible 
+    if(isMenuVisible) 
+    {
+      // Sets the first touch position onto the x-axis of the controller
+      if (rightController.GetTouchDown(SteamVR_Controller.ButtonMask.Touchpad)) {
+        touchLast = rightController.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
+      }
+
+      // Calculates and executes the scroll direction (which is the next menu object) of the object menu
+      if (rightController.GetTouch(SteamVR_Controller.ButtonMask.Touchpad)) 
+      {
+        // Get the current touch position on the x-axis of the controller
+        touchCurrent = rightController.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
+        distance = touchCurrent - touchLast;  // Calculates the new touch distance
+        touchLast = touchCurrent;             // Saves the new touch position
+        swipeSum += distance;                 // Adds the new distance to the previous
+
+        // Swipe in the approriate direction in relation to the swipe sum
+        if (!hasSwipedRight) {
+          if (swipeSum > 0.5f) {
+            swipeSum = 0;
+            objectMenuManager.ShiftToRight();
+            hasSwipedRight = true;
+            hasSwipedLeft = false;
+          }
+        }
+
+        if (!hasSwipedLeft) {
+          if (swipeSum < -0.5f) {
+            swipeSum = 0;
+            objectMenuManager.ShiftToLeft();
+            hasSwipedRight = false;
+            hasSwipedLeft = true;
+          }
+        }
+      }
+
+      // Resets all the values 
+      if (rightController.GetTouchUp(SteamVR_Controller.ButtonMask.Touchpad)) 
+      {
+        swipeSum = 0;
+        touchCurrent = 0;
+        touchLast = 0;
+        hasSwipedLeft = false;
+        hasSwipedRight = false;
+      }
+
+      // Spawns the current selected menu object
+      if (rightController.GetPressDown(SteamVR_Controller.ButtonMask.Touchpad)) {
+        objectMenuManager.SpawnCurrentObject();
+      }
+    }
   }
 
   // Movement management
@@ -186,7 +261,7 @@ public class ControllerInputManager : MonoBehaviour {
   private void OnTriggerStay(Collider col)
   {
     // If the collided foreign object is a ball
-    if (col.gameObject.CompareTag("Ball")) 
+    if (col.gameObject.CompareTag("Throwable")) 
     {
       // Grabs the ball
       if (rightController.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 

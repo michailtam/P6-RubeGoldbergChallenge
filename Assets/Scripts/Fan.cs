@@ -10,7 +10,7 @@ public class Fan : MonoBehaviour {
   private void OnTriggerEnter(Collider col) {
     
     // Check if the ball has entered the air flow of the fan
-    if(col.gameObject.CompareTag("Ball")) {
+    if(col.gameObject.CompareTag("Throwable")) {
       Rigidbody rig = col.GetComponent<Rigidbody>();
       rig.isKinematic = true;
 

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Ball : MonoBehaviour {
+public class BallReset : MonoBehaviour {
 
   private void OnCollisionEnter(Collision col) {
     if(col.gameObject.CompareTag("Ground")) {

@@ -1,14 +1,33 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
-public class GamePlay : MonoBehaviour {
+public class GamePlay : MonoBehaviour
+{
 
-  public GameObject ballPref;           // The ball prefab
-  public GameObject platform;           // The platform game object
-  public GameObject pedastal;           // The pedastal game object
-  public float throwForce = 1.5f;       // The force to throw the ball
-  private Vector3 platformSurface;      // Needed to position the ball onto the platform
+  public GameObject ballPref;               // The ball prefab
+  public GameObject platform;               // The platform game object
+  public GameObject pedastal;               // The pedastal game object
+  public float throwForce = 1.5f;           // The force to throw the ball
+  private Vector3 platformSurface;          // Needed to position the ball onto the platform
+  private List<int> stepsPassed = new List<int>();  // Saves the steps the user has passed
+
+  // Properties
+  public string step
+  {
+    set 
+    {
+      int val = 0;
+      // Checks if the given value is an int
+      if(Int32.TryParse(value, out val)) {
+        stepsPassed.Add(val);
+      }
+      else {
+        Debug.Log("ERROR: Unable to parse " + value.ToString());
+      }
+    }
+  }
 
   // Use this for initialization
   void Start() 
@@ -57,5 +76,34 @@ public class GamePlay : MonoBehaviour {
     rig.isKinematic = false;
     rig.velocity = device.velocity * throwForce;
     rig.angularVelocity = device.angularVelocity;
+  }
+
+  // Checks if the player has cheated the game steps
+  public bool HasPlayerChaeted()
+  {
+    if(stepsPassed.Count > 0) 
+    {
+      int previousStep = -1;
+      for (int i = 0; i < stepsPassed.Count - 1; i++) 
+      {
+        // Checks if the first step is Nr. 1
+        if (stepsPassed[0] != 1) {
+          return true;
+        }
+        // Checks if it is the first step
+        else if (stepsPassed[0] == 1) {
+          previousStep = stepsPassed[i];
+        }
+        // Checks if the order of the steps is the right one
+        else if (stepsPassed[i] == previousStep+1) {
+          previousStep = stepsPassed[i];
+        }
+        else
+          return true;
+      }
+      return false;
+    }
+
+    return true;
   }
 }
