@@ -86,6 +86,7 @@
     <Compile Include="Assets\Scripts\Fan.cs" />
     <Compile Include="Assets\Scripts\GamePlay.cs" />
     <Compile Include="Assets\Scripts\Goal.cs" />
+    <Compile Include="Assets\Scripts\Level1StepsIndicator.cs" />
     <Compile Include="Assets\Scripts\ObjectMenuManager.cs" />
     <Compile Include="Assets\Scripts\ParticleAutoDestroy.cs" />
     <Compile Include="Assets\Scripts\Star.cs" />
@@ -195,6 +196,7 @@
     <Compile Include="Assets\SteamVR\Scripts\SteamVR_Utils.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Shaders\DottedShader.shader" />
     <None Include="Assets\SteamVR\InteractionSystem\Core\Shaders\SeeThru.shader" />
     <None Include="Assets\SteamVR\InteractionSystem\Core\Shaders\Silhouette.shader" />
     <None Include="Assets\SteamVR\InteractionSystem\Hints\Shaders\ControllerButtonHints.shader" />

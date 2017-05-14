@@ -8,8 +8,10 @@ public class Star : MonoBehaviour {
 
   private void OnTriggerEnter(Collider col) {
     if(col.gameObject.CompareTag("Throwable")) {
+      // Decreases the amount of the remaining collectables (stars)
+      GameObject.Find("GamePlay").GetComponent<GamePlay>().decreaseCollectibles(gameObject);
       Instantiate(particle, transform.position, Quaternion.identity);
-      Destroy(gameObject);
+      gameObject.SetActive(false);
     }
   }
 }

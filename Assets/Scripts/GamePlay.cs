@@ -9,12 +9,19 @@ public class GamePlay : MonoBehaviour
   public GameObject ballPref;               // The ball prefab
   public GameObject platform;               // The platform game object
   public GameObject pedastal;               // The pedastal game object
+  public GameObject goal;                   // The goal game object
+  public GameObject star;                   // The star game object
+  public ParticleSystem goalParticle;       // The particle system of the goal
   public float throwForce = 1.5f;           // The force to throw the ball
+  public int levelNumber;                   // Contains the current level number
   private Vector3 platformSurface;          // Needed to position the ball onto the platform
   private List<int> stepsPassed = new List<int>();  // Saves the steps the user has passed
-  
+  private GameObject[] allCollectables;     // All the collectables in the scene
+  private int countCollectibles;            // The amount of collectables in the scene
+
+
   // PROPERTIES
-  public string step
+  public string step  // Contains the number of the current step
   {
     set 
     {
@@ -40,6 +47,14 @@ public class GamePlay : MonoBehaviour
   // Use this for initialization
   void Start()
   {
+    // Gets the amount of collectibles;
+    allCollectables = GameObject.FindGameObjectsWithTag("Collectable");
+    countCollectibles = allCollectables.Length;
+    foreach(GameObject go in allCollectables) {
+      go.SetActive(true);
+    }
+
+    // Calculates the spawn point of the ball
     CalcSpawnPoint();
   }
 
@@ -47,7 +62,23 @@ public class GamePlay : MonoBehaviour
   {
     if (_groundEntered) {
       ResetGame();
+      ResetCollectables();
       SpawnBall();
+    }
+  }
+
+  // Counts the amount of the collectables in the scene
+  public void decreaseCollectibles(GameObject go)
+  {
+    go.SetActive(false);
+    countCollectibles--;
+  }
+
+  // Saves all collectables (Stars) in a list
+  private void ResetCollectables()
+  {
+    foreach(GameObject go in allCollectables) {
+      go.SetActive(true);
     }
   }
 
@@ -69,7 +100,9 @@ public class GamePlay : MonoBehaviour
   // Resets all game properties of the current level
   private void ResetGame()
   {
-    _groundEntered = false;
+    _groundEntered = false; 
+    stepsPassed.Clear();    // Deletes all saved steps in the list
+    ResetCollectables();    // Creates again all collectables
   }
 
   // Spawns a new ball at a specific location on the platform
@@ -115,8 +148,6 @@ public class GamePlay : MonoBehaviour
       int stepToTest = 2; // The step number to test for (starts from step 2)
       for (int i=0; i < stepsPassed.Count; i++) 
       {
-        Debug.Log("STEPS PASST: " + stepsPassed[i] + "   STEP TO TEST: " + stepToTest);
-
         // Checks if the first step is NOT number 1
         if (stepsPassed[0] != 1) {
           return true;
@@ -127,7 +158,6 @@ public class GamePlay : MonoBehaviour
         }
         // Checks if the order of the steps is the right one
         else if (stepsPassed[i] == stepToTest) {
-          Debug.Log("STEP: " + stepToTest);
           stepToTest++;
         }
         else {
@@ -137,5 +167,51 @@ public class GamePlay : MonoBehaviour
       return false;
     }
     return true;
+  }
+
+  // Chechs if the player has cheated and if he has collected all collectables
+  public void CheckPlayer()
+  {
+    // Checks if the player has cheated the steps
+    if (HasPlayerCheated() || countCollectibles > 0) {
+      Debug.Log("PLAYER HAS CHEATED THE STEPS");
+      ResetGame();
+    }
+    else {
+      // Create a particle system for 5 sec to indicate that the ball is in the goal
+      GameObject ball = GameObject.FindGameObjectWithTag("Throwable");
+      Destroy(ball);    // Destroy the ball after entering the goal
+      Instantiate(goalParticle, goal.transform.position, Quaternion.Euler(-90, 0, 0));
+      StartCoroutine(DelayBeforeNextLevelLoad());
+    }
+  }
+
+  IEnumerator DelayBeforeNextLevelLoad()
+  {
+    yield return new WaitForSeconds(3.0f);
+    LoadNextLevel();
+  }
+
+  // Loads the level related to the level number
+  public void LoadNextLevel()
+  {
+    switch (levelNumber) 
+    {
+      case 1:
+        SteamVR_LoadLevel.Begin("Level2", false, 2f);
+        break;
+      case 2:
+        SteamVR_LoadLevel.Begin("Level3");
+        break;
+      case 3:
+        SteamVR_LoadLevel.Begin("Level4");
+        break;
+      case 4:
+        SteamVR_LoadLevel.Begin("Level5");
+        break;
+      default:
+        Debug.Log("ERROR: Undefined level number");
+        break;
+    }
   }
 }
