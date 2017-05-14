@@ -12,8 +12,8 @@ public class GamePlay : MonoBehaviour
   public float throwForce = 1.5f;           // The force to throw the ball
   private Vector3 platformSurface;          // Needed to position the ball onto the platform
   private List<int> stepsPassed = new List<int>();  // Saves the steps the user has passed
-
-  // Properties
+  
+  // PROPERTIES
   public string step
   {
     set 
@@ -29,10 +29,26 @@ public class GamePlay : MonoBehaviour
     }
   }
 
+  private bool _groundEntered = false;
+  public bool groundEntered
+  {
+    set { _groundEntered = value; }
+    get { return _groundEntered; }
+  }
+
+
   // Use this for initialization
-  void Start() 
+  void Start()
   {
     CalcSpawnPoint();
+  }
+
+  void Update()
+  {
+    if (_groundEntered) {
+      ResetGame();
+      SpawnBall();
+    }
   }
 
   // Calculates the spawn point of the ball
@@ -50,12 +66,25 @@ public class GamePlay : MonoBehaviour
     }
   }
 
+  // Resets all game properties of the current level
+  private void ResetGame()
+  {
+    _groundEntered = false;
+  }
+
   // Spawns a new ball at a specific location on the platform
   public void SpawnBall() 
   {
-    GameObject ball = Instantiate(ballPref, platformSurface, Quaternion.identity);
+    // Wait 2 sec until a new ball gets respawn onto the pedastal
+    StartCoroutine(DelayTillCreation());
+  }
 
-    // Set the properties of the ball to position it on specific place on the platform
+  IEnumerator DelayTillCreation()
+  {
+    yield return new WaitForSeconds(2f);
+
+    // Create a new ball in the pedastal
+    GameObject ball = Instantiate(ballPref, platformSurface, Quaternion.identity);
     ball.GetComponent<Rigidbody>().isKinematic = false;   // Allows the physics of the ball to be used by Unity
     ball.GetComponent<Rigidbody>().useGravity = true;     // Lets the ball drop onto the platform
     ball.transform.position = new Vector3(ball.transform.position.x, ball.transform.position.y + 0.5f, ball.transform.position.z + 0.85f);
@@ -79,31 +108,34 @@ public class GamePlay : MonoBehaviour
   }
 
   // Checks if the player has cheated the game steps
-  public bool HasPlayerChaeted()
+  public bool HasPlayerCheated()
   {
     if(stepsPassed.Count > 0) 
     {
-      int previousStep = -1;
-      for (int i = 0; i < stepsPassed.Count - 1; i++) 
+      int stepToTest = 2; // The step number to test for (starts from step 2)
+      for (int i=0; i < stepsPassed.Count; i++) 
       {
-        // Checks if the first step is Nr. 1
+        Debug.Log("STEPS PASST: " + stepsPassed[i] + "   STEP TO TEST: " + stepToTest);
+
+        // Checks if the first step is NOT number 1
         if (stepsPassed[0] != 1) {
           return true;
         }
-        // Checks if it is the first step
-        else if (stepsPassed[0] == 1) {
-          previousStep = stepsPassed[i];
+        // Checks if the first step is Nr. 1
+        else if (stepsPassed[i] == 1) {
+          continue;
         }
         // Checks if the order of the steps is the right one
-        else if (stepsPassed[i] == previousStep+1) {
-          previousStep = stepsPassed[i];
+        else if (stepsPassed[i] == stepToTest) {
+          Debug.Log("STEP: " + stepToTest);
+          stepToTest++;
         }
-        else
+        else {
           return true;
+        }  
       }
       return false;
     }
-
     return true;
   }
 }

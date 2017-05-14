@@ -4,17 +4,19 @@ using UnityEngine;
 
 public class BallReset : MonoBehaviour {
 
+  public ParticleSystem particle;
+  private bool hasBallEneteredGround = false;
+
   private void OnCollisionEnter(Collision col) {
     if(col.gameObject.CompareTag("Ground")) {
-      // Wait 2 sec until the ball gets destroyed and
-      // a new one gets respawn onto the pedastal
-      StartCoroutine(DelayTillDestroy()); 
-    }
-  }
+      if(!hasBallEneteredGround) {
+        hasBallEneteredGround = true;
 
-  IEnumerator DelayTillDestroy() {
-    yield return new WaitForSeconds(2f);  
-    GameObject.Find("GamePlay").GetComponent<GamePlay>().SpawnBall();
-    Destroy(gameObject);
+        // Indicate that the ball has hit the ground
+        GameObject.Find("GamePlay").GetComponent<GamePlay>().groundEntered = true;
+        Instantiate(particle, transform.position, Quaternion.Euler(-90, 0, 0));
+        Destroy(gameObject);
+      }
+    }
   }
 }

@@ -11,7 +11,7 @@ public class Goal : MonoBehaviour
   {
     if (col.gameObject.CompareTag("Throwable")) {
       // Checks if the player has cheated the steps
-      if(gamePlay.HasPlayerChaeted()) {
+      if(gamePlay.HasPlayerCheated()) {
         Debug.Log("PLAYER HAS CHEATED THE STEPS");
       }
       else {
