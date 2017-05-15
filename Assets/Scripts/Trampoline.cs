@@ -10,7 +10,6 @@ public class Trampoline : MonoBehaviour {
     // Checks if the ball has hit the ground
     bool ballGrounded = GameObject.Find("GamePlay").GetComponent<GamePlay>().groundEntered;
     if (ballGrounded) {
-      Debug.Log("STEP RESET");
       stepSaved = false;
     }
   } 
@@ -19,7 +18,6 @@ public class Trampoline : MonoBehaviour {
   {
     if(!stepSaved) {
       GameObject.Find("GamePlay").GetComponent<GamePlay>().tag = gameObject.tag;
-      Debug.Log("STEP SAVED");
       stepSaved = true;
     }
   }
