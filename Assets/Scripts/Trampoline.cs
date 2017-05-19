@@ -5,20 +5,13 @@ using UnityEngine;
 public class Trampoline : MonoBehaviour {
   private bool stepSaved = false;
 
-  void Update()
-  {
-    // Checks if the ball has hit the ground
-    bool ballGrounded = GameObject.Find("GamePlay").GetComponent<GamePlay>().groundEntered;
-    if (ballGrounded) {
-      stepSaved = false;
-    }
-  } 
-
   void OnCollisionEnter(Collision col)
   {
     if(!stepSaved) {
-      GameObject.Find("GamePlay").GetComponent<GamePlay>().tag = gameObject.tag;
-      stepSaved = true;
+      // Checks if the player has cheated the step
+      /*GameObject.Find("GamePlay").GetComponent<GamePlay>().
+        HasPlayerCheated(gameObject.transform.FindChild("ExitPoint").tag);
+      stepSaved = true;*/
     }
   }
 }

@@ -26,6 +26,7 @@ public class ControllerInputManager : MonoBehaviour
   public float teleportRange;             // Determines the range of the teleport position
   public Material laserPointerColor;      // The color of the laser pointer
   public Material restrictedColor;        // The color of the laser pointer pointing to a restriced position
+  private float maxHeightNav = 5f;        // The maximum height (4m) the player is able to rise 
 
   // Dashing
   public float dashSpeed = 0.1f;          // Determines the speed the player is dashing
@@ -38,7 +39,7 @@ public class ControllerInputManager : MonoBehaviour
   public float moveSpeed = 4f;            // Determines the walking speed
   private Vector3 movementDirection;      // Determines the direction the player is moving
 
-  // Swiping
+  // Object menu
   public ObjectMenuManager objectMenuManager; // The menu manager object
   private float swipeSum;                 // The calculated swipe sum
   private float touchLast;                // The last touch position onto the axis of the controller
@@ -46,7 +47,6 @@ public class ControllerInputManager : MonoBehaviour
   private float distance;                 // The calculated distance of the touch position
   private bool hasSwipedLeft;             // Prevents from unwanted swiping to the left 
   private bool hasSwipedRight;            // Prevents from unwanted swiping to the right
-  private bool isMenuVisible = false;     // Determines if the object menu is visible
 
 
   // Use this for initialization
@@ -77,22 +77,16 @@ public class ControllerInputManager : MonoBehaviour
   private void ManageObjectMenu()
   {
     // Toggle the object menu
-    if(device.GetPressDown(SteamVR_Controller.ButtonMask.Grip)) {
-      isMenuVisible = !isMenuVisible;
-      objectMenuManager.gameObject.SetActive(isMenuVisible);
-    }
-
-    // Manage the object menu if and only if the menu is visible 
-    if(isMenuVisible) 
+    if(device.GetTouchDown(SteamVR_Controller.ButtonMask.Touchpad)) 
     {
-      // Sets the first touch position onto the x-axis of the controller
-      if (device.GetTouchDown(SteamVR_Controller.ButtonMask.Touchpad)) {
-        touchLast = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
-      }
+      Debug.Log("PRESS DOWN");
+      objectMenuManager.gameObject.SetActive(true);
 
+      // Sets the first touch position onto the x-axis of the controller
+      touchLast = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
+      
       // Calculates and executes the scroll direction (which is the next menu object) of the object menu
-      if (device.GetTouch(SteamVR_Controller.ButtonMask.Touchpad)) 
-      {
+      if (device.GetTouch(SteamVR_Controller.ButtonMask.Touchpad)) {
         // Get the current touch position on the x-axis of the controller
         touchCurrent = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
         distance = touchCurrent - touchLast;  // Calculates the new touch distance
@@ -118,44 +112,54 @@ public class ControllerInputManager : MonoBehaviour
           }
         }
       }
+    }
+    
+    // Resets all the values and hides the object menu
+    if (device.GetTouchUp(SteamVR_Controller.ButtonMask.Touchpad)) 
+    {
+      Debug.Log("PRESS UP");
 
-      // Resets all the values 
-      if (device.GetTouchUp(SteamVR_Controller.ButtonMask.Touchpad)) 
-      {
-        swipeSum = 0;
-        touchCurrent = 0;
-        touchLast = 0;
-        hasSwipedLeft = false;
-        hasSwipedRight = false;
-      }
+      swipeSum = 0;
+      touchCurrent = 0;
+      touchLast = 0;
+      hasSwipedLeft = false;
+      hasSwipedRight = false;
 
-      // Spawns the current selected menu object
-      if (device.GetPressDown(SteamVR_Controller.ButtonMask.Touchpad)) {
-        objectMenuManager.SpawnCurrentObject();
-      }
+      objectMenuManager.gameObject.SetActive(false);
+    }
+
+    // Spawns the current selected menu object
+    if (device.GetPressDown(SteamVR_Controller.ButtonMask.Touchpad)) {
+      objectMenuManager.SpawnCurrentObject();
     }
   }
 
   // Movement management
   private void Movement()
   {
-    // Navigates up and down (left controller)
+    // Rises player one meter up or down
     if (device.GetTouchDown(SteamVR_Controller.ButtonMask.Touchpad)) 
     {
       float up = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).y;
       float playerNavigationHeight = playerCam.transform.position.y;
 
+      // Rises the player up
       if (up >= 0.5) {
-        player.transform.position = new Vector3(
+        if(player.transform.position.y <= maxHeightNav) {
+          player.transform.position = new Vector3(
           player.transform.position.x,
           player.transform.position.y + 1.0f,
           player.transform.position.z);
+        }
       }
+      // Falls one meter down 
       else if (up <= -0.5 && playerNavigationHeight >= playerCam.transform.position.y) {
-        player.transform.position = new Vector3(
+        if(player.transform.position.y >= 1) {
+          player.transform.position = new Vector3(
           player.transform.position.x,
           player.transform.position.y - 1.0f,
           player.transform.position.z);
+        }
       }
     }
 
@@ -173,7 +177,7 @@ public class ControllerInputManager : MonoBehaviour
     else 
     {
       // If the trigger of the controller gets pressed
-      if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) 
+      if (device.GetPress(SteamVR_Controller.ButtonMask.Touchpad)) 
       {
         if (laser == null) return;
 
@@ -243,7 +247,7 @@ public class ControllerInputManager : MonoBehaviour
       }
 
       // If the trigger of the controller gets released
-      if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) 
+      if (device.GetPressUp(SteamVR_Controller.ButtonMask.Touchpad)) 
       {
         if (laser == null) return;
 
@@ -262,16 +266,13 @@ public class ControllerInputManager : MonoBehaviour
   private void OnTriggerStay(Collider col)
   {
     // If the collided foreign object is a ball
-    if (col.gameObject.CompareTag("Throwable")) 
-    {
+    if (col.gameObject.CompareTag("Throwable")) {
       // Grabs the ball
-      if (device.GetPress(SteamVR_Controller.ButtonMask.Touchpad)) 
-      {
+      if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) {
         gamePlay.GrabBall(col, gameObject, device);
       }
       // Throws the ball
-      else if (device.GetPressUp(SteamVR_Controller.ButtonMask.Touchpad)) 
-      {
+      else if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
         gamePlay.ThrowBall(col, gameObject, device);
       }
     }

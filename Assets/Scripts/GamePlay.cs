@@ -2,47 +2,25 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
+
 
 public class GamePlay : MonoBehaviour
 {
-
-  public GameObject ballPref;               // The ball prefab
-  public GameObject platform;               // The platform game object
-  public GameObject pedastal;               // The pedastal game object
   public GameObject goal;                   // The goal game object
   public GameObject star;                   // The star game object
+  public Transform player;                 // The current player
   public ParticleSystem goalParticle;       // The particle system of the goal
+  public GameObject ball;                   // The ball in the scene
+  public Material ballMaterial;             // The right ball material
+  public Material cheatBallMaterial;        // The color that indicates that the player has cheated
   public float throwForce = 1.5f;           // The force to throw the ball
-  public int levelNumber;                   // Contains the current level number
+  public int levelNumber;                   // Contains the current level number 
   private Vector3 spawnPoint;               // The calculated spawn point of the ball
-  private List<int> stepsPassed = new List<int>();  // Saves the steps the user has passed
+  private int previousStep = 0;             // Saves the previous step
   private GameObject[] allCollectables;     // All the collectables in the scene
   private int countCollectibles;            // The amount of collectables in the scene
-  private GameObject ballInstance;          // The one ball instance in the scene
-
-
-  // PROPERTIES
-  public string step  // Contains the number of the current step
-  {
-    set 
-    {
-      int val = 0;
-      // Checks if the given value is an int
-      if(Int32.TryParse(value, out val)) {
-        stepsPassed.Add(val);
-      }
-      else {
-        Debug.Log("ERROR: Unable to parse " + value.ToString());
-      }
-    }
-  }
-
-  private bool _groundEntered = false;
-  public bool groundEntered
-  {
-    set { _groundEntered = value; }
-    get { return _groundEntered; }
-  }
+  private bool cheatStatus = false;         // Indicates if the player has cheated
 
   // Use this for initialization
   void Start()
@@ -52,16 +30,6 @@ public class GamePlay : MonoBehaviour
     countCollectibles = allCollectables.Length;
     foreach(GameObject go in allCollectables) {
       go.SetActive(true);
-    }
-
-    // Calculates the spawn point of the ball
-    CalcSpawnPoint();
-  }
-
-  void Update()
-  {
-    if (_groundEntered) {
-      ResetGame();
     }
   }
 
@@ -80,45 +48,12 @@ public class GamePlay : MonoBehaviour
     }
   }
 
-  // Calculates the spawn point of the ball
-  private void CalcSpawnPoint() 
-  {
-    // Shoots a 5m ray downwards from 2m centered above the platform to determine the
-    // center point of the surface of the platform
-    RaycastHit hit;
-    Vector3 rayStart = new Vector3(platform.transform.position.x, platform.transform.position.y + 2.0f, platform.transform.position.z);
-    // To test the ray: Debug.DrawLine(rayStart, rayStart - Vector3.up * 5, Color.green);
-
-    if (Physics.Raycast(rayStart, -Vector3.up, out hit, 5)) {
-      // Calculates the spawn point of the ball
-      spawnPoint = new Vector3(hit.point.x, hit.point.y + 0.5f, hit.point.z + 0.85f);
-      ballInstance = Instantiate(ballPref, spawnPoint, Quaternion.identity);
-      // Sets its physics properties
-      Rigidbody rig = ballInstance.GetComponent<Rigidbody>();
-      rig.isKinematic = false;  // Allows the physics of the ball to be used by Unity
-      rig.useGravity = true;    // Lets the ball drop onto the platform
-    }
-  }
-
   // Resets all game properties of the current level
-  private void ResetGame()
+  public void ResetLevel()
   {
-    _groundEntered = false;
-    stepsPassed.Clear();    // Deletes all saved steps in the list
+    previousStep = 0;
     ResetCollectables();    // Creates again all collectables
-    ResetBallPosition();
-  }
-
-  // Spawns a new ball at a specific location on the platform
-  public void ResetBallPosition() 
-  {
-    ballInstance.transform.position = spawnPoint; 
-    
-    Rigidbody rig = ballInstance.GetComponent<Rigidbody>();
-    rig.isKinematic = false;  // Allows the physics of the ball to be used by Unity
-    rig.velocity = Vector3.zero;
-    rig.angularVelocity = Vector3.zero;
-    rig.useGravity = true;    // Lets the ball drop onto the platform
+    ball.GetComponent<Renderer>().material = ballMaterial;
   }
 
   // Grabs the ball
@@ -136,44 +71,28 @@ public class GamePlay : MonoBehaviour
     rig.isKinematic = false;
     rig.velocity = device.velocity * throwForce;
     rig.angularVelocity = device.angularVelocity;
-  }
 
-  // Checks if the player has cheated the game steps
-  public bool HasPlayerCheated()
-  {
-    if(stepsPassed.Count > 0) 
-    {
-      int stepToTest = 2; // The step number to test for (starts from step 2)
-      for (int i=0; i < stepsPassed.Count; i++) 
-      {
-        // Checks if the first step is NOT number 1
-        if (stepsPassed[0] != 1) {
-          return true;
-        }
-        // Checks if the first step is Nr. 1
-        else if (stepsPassed[i] == 1) {
-          continue;
-        }
-        // Checks if the order of the steps is the right one
-        else if (stepsPassed[i] == stepToTest) {
-          stepToTest++;
-        }
-        else {
-          return true;
-        }  
+    // Checks if the ball was NOT released from the platform
+    bool isPlayerOnPlatform = false;
+    RaycastHit[] hits = Physics.RaycastAll(player.transform.position, -Vector3.up, 10f).OrderBy(h => h.distance).ToArray();
+    foreach(RaycastHit h in hits) {
+      if(string.Compare(h.transform.tag, "Platform") == 0) {
+        isPlayerOnPlatform = true;
       }
-      return false;
     }
-    return true;
+    if(!isPlayerOnPlatform) {
+      ball.GetComponent<Renderer>().material = cheatBallMaterial;
+      cheatStatus = true;
+    }
   }
 
   // Chechs if the player has cheated and if he has collected all collectables
   public void CheckPlayer()
   {
     // Checks if the player has cheated the steps
-    if (HasPlayerCheated() || countCollectibles > 0) {
+    if (countCollectibles > 0) {
       Debug.Log("PLAYER HAS CHEATED THE STEPS");
-      ResetGame();
+      ResetLevel();
     }
     else {
       // Create a particle system for 5 sec to indicate that the ball is in the goal
@@ -199,13 +118,10 @@ public class GamePlay : MonoBehaviour
         SteamVR_LoadLevel.Begin("Level2", false, 2f);
         break;
       case 2:
-        SteamVR_LoadLevel.Begin("Level3");
+        SteamVR_LoadLevel.Begin("Level3", false, 2f);
         break;
       case 3:
-        SteamVR_LoadLevel.Begin("Level4");
-        break;
-      case 4:
-        SteamVR_LoadLevel.Begin("Level5");
+        SteamVR_LoadLevel.Begin("Level4", false, 2f);
         break;
       default:
         Debug.Log("ERROR: Undefined level number");

@@ -3,20 +3,27 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class BallReset : MonoBehaviour {
-
   public ParticleSystem particle;
-  private bool hasBallEneteredGround = false;
+  private Vector3 startPosition;
+
+  void Start()
+  {
+    // Saves the init position in the current level
+    startPosition = transform.position;
+  }
 
   private void OnCollisionEnter(Collision col) {
     if (col.gameObject.CompareTag("Ground")) {
-      if(!hasBallEneteredGround) {
-        hasBallEneteredGround = true;
+      // Resets the level and indicates that the ball has hit the ground
+      GameObject.Find("GamePlay").GetComponent<GamePlay>().ResetLevel();
+      Instantiate(particle, transform.position, Quaternion.Euler(-90, 0, 0));
 
-        // Indicate that the ball has hit the ground
-        GameObject.Find("GamePlay").GetComponent<GamePlay>().groundEntered = true;
-        Instantiate(particle, transform.position, Quaternion.Euler(-90, 0, 0));
-        hasBallEneteredGround = false;
-      }
+      // Resets ball position (returns to the pedastal) and velocities
+      transform.position = startPosition;
+      Rigidbody rig = GetComponent<Rigidbody>();
+      rig.velocity = Vector3.zero;
+      rig.angularVelocity = Vector3.zero;
+      rig.isKinematic = true;
     }
   }
 }
