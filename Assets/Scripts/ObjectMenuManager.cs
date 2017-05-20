@@ -44,8 +44,29 @@ public class ObjectMenuManager : MonoBehaviour {
   // Spawns the selected menu item
   public void SpawnCurrentObject()
   {
-    Instantiate(objectPrefabList[currentMenuObjectIndex], 
-      objectList[currentMenuObjectIndex].transform.position, 
-      objectList[currentMenuObjectIndex].transform.rotation);
+    // If it is a game object with rigidbody properties (i.e. trampoline)
+    if (string.Compare(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1).transform.name, "Trampoline") == 0) {
+      // Creates a vector to instantiate under the shown prefab
+      Vector3 posCreation = new Vector3(
+        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.x,
+        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.y - 0.2f,
+        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.z);
+
+      Transform obj = Instantiate(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1),
+      posCreation,
+      objectList[currentMenuObjectIndex].transform.GetChild(1).transform.rotation);
+
+      // Sets the physics properties of the trampoline 
+      objectList[currentMenuObjectIndex].transform.GetChild(1).GetComponent<Collider>().isTrigger = true;
+      Rigidbody rig = obj.gameObject.GetComponent<Rigidbody>();
+      rig.useGravity = true;
+      rig.isKinematic = false;
+      objectList[currentMenuObjectIndex].transform.GetChild(1).GetComponent<Collider>().isTrigger = false;
+    }
+    else { 
+    Instantiate(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1),
+      objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position,
+      objectList[currentMenuObjectIndex].transform.GetChild(1).transform.rotation);
+    }
   }
 }

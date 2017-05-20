@@ -76,40 +76,37 @@ public class ControllerInputManager : MonoBehaviour
   // Manages the object menu
   private void ManageObjectMenu()
   {
-    // Toggle the object menu
-    if(device.GetTouchDown(SteamVR_Controller.ButtonMask.Touchpad)) 
+    // Set the object menu visible as long as the user is touching the touchpad
+    if(device.GetTouch(SteamVR_Controller.ButtonMask.Touchpad)) 
     {
-      Debug.Log("PRESS DOWN");
       objectMenuManager.gameObject.SetActive(true);
 
       // Sets the first touch position onto the x-axis of the controller
-      touchLast = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
+      touchCurrent = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
       
       // Calculates and executes the scroll direction (which is the next menu object) of the object menu
-      if (device.GetTouch(SteamVR_Controller.ButtonMask.Touchpad)) {
-        // Get the current touch position on the x-axis of the controller
-        touchCurrent = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
-        distance = touchCurrent - touchLast;  // Calculates the new touch distance
-        touchLast = touchCurrent;             // Saves the new touch position
-        swipeSum += distance;                 // Adds the new distance to the previous
+      // Get the current touch position on the x-axis of the controller
+      touchCurrent = device.GetAxis(Valve.VR.EVRButtonId.k_EButton_SteamVR_Touchpad).x;
+      distance = touchCurrent - touchLast;  // Calculates the new touch distance
+      touchLast = touchCurrent;             // Saves the new touch position
+      swipeSum += distance;                 // Adds the new distance to the previous
 
-        // Swipe in the approriate direction in relation to the swipe sum
-        if (!hasSwipedRight) {
-          if (swipeSum > 0.5f) {
-            swipeSum = 0;
-            objectMenuManager.ShiftToRight();
-            hasSwipedRight = true;
-            hasSwipedLeft = false;
-          }
+      // Swipe in the approriate direction in relation to the swipe sum
+      if (!hasSwipedRight) {
+        if (swipeSum > 0.5f) {
+          swipeSum = 0;
+          objectMenuManager.ShiftToRight();
+          hasSwipedRight = true;
+          hasSwipedLeft = false;
         }
+      }
 
-        if (!hasSwipedLeft) {
-          if (swipeSum < -0.5f) {
-            swipeSum = 0;
-            objectMenuManager.ShiftToLeft();
-            hasSwipedRight = false;
-            hasSwipedLeft = true;
-          }
+      if (!hasSwipedLeft) {
+        if (swipeSum < -0.5f) {
+          swipeSum = 0;
+          objectMenuManager.ShiftToLeft();
+          hasSwipedRight = false;
+          hasSwipedLeft = true;
         }
       }
     }
