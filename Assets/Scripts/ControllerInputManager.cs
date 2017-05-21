@@ -113,15 +113,12 @@ public class ControllerInputManager : MonoBehaviour
     
     // Resets all the values and hides the object menu
     if (device.GetTouchUp(SteamVR_Controller.ButtonMask.Touchpad)) 
-    {
-      Debug.Log("PRESS UP");
-
+    { 
       swipeSum = 0;
       touchCurrent = 0;
       touchLast = 0;
       hasSwipedLeft = false;
       hasSwipedRight = false;
-
       objectMenuManager.gameObject.SetActive(false);
     }
 
@@ -262,15 +259,27 @@ public class ControllerInputManager : MonoBehaviour
   // Gets invoked till the foreign object exits the collider
   private void OnTriggerStay(Collider col)
   {
-    // If the collided foreign object is a ball
+    // If the collided object is a throwable (ball)
     if (col.gameObject.CompareTag("Throwable")) {
-      // Grabs the ball
+      // Grabs the throwable object
       if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) {
         gamePlay.GrabBall(col, gameObject, device);
       }
-      // Throws the ball
+      // Throws the throwable object
       else if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
         gamePlay.ThrowBall(col, gameObject, device);
+      }
+    }
+
+    // If the collided object is a throwable (ball)
+    if(col.gameObject.CompareTag("Structure")) {
+      // Grabs the moveable object
+      if (device.GetPress(SteamVR_Controller.ButtonMask.Trigger)) {
+        gamePlay.GrabObject(col, gameObject, device);
+      }
+      // Throws the throwable object
+      else if (device.GetPressUp(SteamVR_Controller.ButtonMask.Trigger)) {
+        gamePlay.ReleaseObject(col, gameObject, device);
       }
     }
   }

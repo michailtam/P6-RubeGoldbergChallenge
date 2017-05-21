@@ -56,14 +56,14 @@ public class GamePlay : MonoBehaviour
     ball.GetComponent<Renderer>().material = ballMaterial;
   }
 
-  // Grabs the ball
+  // Grabs the throwable object (ball)
   public void GrabBall(Collider col, GameObject parent, SteamVR_Controller.Device device) 
   {
     col.transform.SetParent(parent.transform);
     col.GetComponent<Rigidbody>().isKinematic = true;
   }
 
-  // Throws the ball
+  // Throws the throwable object (ball)
   public void ThrowBall(Collider col, GameObject parent, SteamVR_Controller.Device device) 
   {
     col.transform.SetParent(null);
@@ -83,6 +83,29 @@ public class GamePlay : MonoBehaviour
     if(!isPlayerOnPlatform) {
       ball.GetComponent<Renderer>().material = cheatBallMaterial;
       cheatStatus = true;
+    }
+  }
+
+  // Grabs the moveable object
+  public void GrabObject(Collider col, GameObject parent, SteamVR_Controller.Device device)
+  {
+    col.transform.SetParent(parent.transform);
+    col.GetComponent<Rigidbody>().isKinematic = true;
+  }
+
+  // Releases the moveable object at the current position
+  public void ReleaseObject(Collider col, GameObject parent, SteamVR_Controller.Device device)
+  {
+    col.transform.SetParent(null);
+    col.GetComponent<Rigidbody>().isKinematic = true;
+
+    // Checks if the gameobject of the collider is the trampoline
+    string s = col.gameObject.name;
+    if (s.Contains("Trampoline")) {
+      Rigidbody rig = col.GetComponent<Rigidbody>();
+      rig.useGravity = true;
+      rig.isKinematic = false;
+      col.isTrigger = false;
     }
   }
 

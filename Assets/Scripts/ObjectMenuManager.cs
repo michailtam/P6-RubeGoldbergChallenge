@@ -45,7 +45,8 @@ public class ObjectMenuManager : MonoBehaviour {
   public void SpawnCurrentObject()
   {
     // If it is a game object with rigidbody properties (i.e. trampoline)
-    if (string.Compare(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1).transform.name, "Trampoline") == 0) {
+    if (string.Compare(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1).transform.name, "Trampoline") == 0) 
+    {
       // Creates a vector to instantiate under the shown prefab
       Vector3 posCreation = new Vector3(
         objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.x,
@@ -63,10 +64,11 @@ public class ObjectMenuManager : MonoBehaviour {
       rig.isKinematic = false;
       objectList[currentMenuObjectIndex].transform.GetChild(1).GetComponent<Collider>().isTrigger = false;
     }
-    else { 
-    Instantiate(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1),
-      objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position,
-      objectList[currentMenuObjectIndex].transform.GetChild(1).transform.rotation);
+    else 
+    {
+      Instantiate(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1),
+        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position,
+        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.rotation);
     }
   }
 }
