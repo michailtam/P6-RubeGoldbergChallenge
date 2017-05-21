@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Level1StepsIndicator : MonoBehaviour {
+public class LevelStepsIndicator : MonoBehaviour {
 
   public LineRenderer line;
   public Transform[] gameSteps;

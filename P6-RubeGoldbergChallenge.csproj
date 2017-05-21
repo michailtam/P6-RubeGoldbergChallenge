@@ -86,7 +86,7 @@
     <Compile Include="Assets\Scripts\Fan.cs" />
     <Compile Include="Assets\Scripts\GamePlay.cs" />
     <Compile Include="Assets\Scripts\Goal.cs" />
-    <Compile Include="Assets\Scripts\Level1StepsIndicator.cs" />
+    <Compile Include="Assets\Scripts\LevelStepsIndicator.cs" />
     <Compile Include="Assets\Scripts\ObjectMenuManager.cs" />
     <Compile Include="Assets\Scripts\ParticleAutoDestroy.cs" />
     <Compile Include="Assets\Scripts\Star.cs" />

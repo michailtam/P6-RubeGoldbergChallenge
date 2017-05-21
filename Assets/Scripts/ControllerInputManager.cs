@@ -48,6 +48,9 @@ public class ControllerInputManager : MonoBehaviour
   private bool hasSwipedLeft;             // Prevents from unwanted swiping to the left 
   private bool hasSwipedRight;            // Prevents from unwanted swiping to the right
 
+  // Tutorial UI
+  public GameObject tutorialUI;           // The tutorial UI which explains the gameplay
+
 
   // Use this for initialization
   void Start() {
@@ -71,6 +74,20 @@ public class ControllerInputManager : MonoBehaviour
       Movement();         // Manages the movement with the left controller
     if(device.index == indexRight)
       ManageObjectMenu(); // Manages the menu objects with the right controller
+    DisplayTutorialUI();  // Displays or hides the tutorial UI
+  }
+
+  // Displays or hides the tutorial UI
+  private void DisplayTutorialUI()
+  {
+    if(device.GetPressDown(SteamVR_Controller.ButtonMask.Grip)) {
+      if (tutorialUI.activeInHierarchy) {
+        tutorialUI.SetActive(false);
+      }
+      else {
+        tutorialUI.SetActive(true);
+      }
+    }
   }
 
   // Manages the object menu
@@ -189,7 +206,7 @@ public class ControllerInputManager : MonoBehaviour
         // Check if the pointer points direct onto the restricted point
         for (int i = 0; i < hits.Length; i++) 
         {   
-          if (hits[0].transform.CompareTag("Restricted")) 
+          if (hits[0].transform.CompareTag("Restricted") || hits[0].transform.CompareTag("Structure")) 
           {
             laser.SetPosition(1, transform.position + transform.forward * (hits[0].distance));
             laser.material = restrictedColor;
@@ -209,9 +226,6 @@ public class ControllerInputManager : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(transform.position, transform.forward, out hit, teleportRange, laserMask)) 
         {
-          if (hit.collider.gameObject.CompareTag("Restricted"))
-            Debug.Log("RESTRICTED");
-
           teleportLocation = hit.point;   // Records where the laser hits
           laser.SetPosition(1, teleportLocation);   // Sets the end point of the laser pointer
           laser.material = laserPointerColor;

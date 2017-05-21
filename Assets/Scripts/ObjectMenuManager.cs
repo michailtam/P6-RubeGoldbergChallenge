@@ -5,11 +5,12 @@ using UnityEngine;
 public class ObjectMenuManager : MonoBehaviour {
 
   public List<GameObject> objectPrefabList;  // The prefab list that contains the prefab objects
+  public int[] countInstances;
   private List<GameObject> objectList;       // The list that contains the menu objects
   private int currentMenuObjectIndex = 0;    // The current index of the menu object 
 
-	// Use this for initialization
-	void Start ()
+  // Use this for initialization
+  void Start ()
   {
     objectList = new List<GameObject>();
     
@@ -44,6 +45,12 @@ public class ObjectMenuManager : MonoBehaviour {
   // Spawns the selected menu item
   public void SpawnCurrentObject()
   {
+    // Checks if for the current prefab it is allowed to create an additional instance
+    if (countInstances[currentMenuObjectIndex] == 0)
+      return;
+
+    countInstances[currentMenuObjectIndex]--; // Decreases the allowed instances
+
     // If it is a game object with rigidbody properties (i.e. trampoline)
     if (string.Compare(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1).transform.name, "Trampoline") == 0) 
     {

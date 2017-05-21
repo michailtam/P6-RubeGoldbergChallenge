@@ -20,11 +20,14 @@ public class GamePlay : MonoBehaviour
   private int previousStep = 0;             // Saves the previous step
   private GameObject[] allCollectables;     // All the collectables in the scene
   private int countCollectibles;            // The amount of collectables in the scene
-  private bool cheatStatus = false;         // Indicates if the player has cheated
+  private Vector3 ballStartPosition;        // The start position of the ball (on the pedastal)
 
   // Use this for initialization
   void Start()
   {
+    // Gets the balls start position on the pedastal
+    ballStartPosition = ball.transform.position;
+
     // Gets the amount of collectibles;
     allCollectables = GameObject.FindGameObjectsWithTag("Collectable");
     countCollectibles = allCollectables.Length;
@@ -52,8 +55,22 @@ public class GamePlay : MonoBehaviour
   public void ResetLevel()
   {
     previousStep = 0;
+    ResetBallPosition();    // Resets the balls position
     ResetCollectables();    // Creates again all collectables
+    goal.layer = LayerMask.NameToLayer("ValidGoal");  // Resets the layer of the goal
+    goal.GetComponent<Goal>().hasEnteredGoal = false;
+  }
+
+  // Resets the balls position (returns to the pedastal)
+  private void ResetBallPosition()
+  {
+    // Resets ball position (returns to the pedastal) and velocities
+    ball.transform.position = ballStartPosition;
     ball.GetComponent<Renderer>().material = ballMaterial;
+    Rigidbody rig = ball.GetComponent<Rigidbody>();
+    rig.velocity = Vector3.zero;
+    rig.angularVelocity = Vector3.zero;
+    rig.isKinematic = true;
   }
 
   // Grabs the throwable object (ball)
@@ -74,23 +91,29 @@ public class GamePlay : MonoBehaviour
 
     // Checks if the ball was NOT released from the platform
     bool isPlayerOnPlatform = false;
-    RaycastHit[] hits = Physics.RaycastAll(player.transform.position, -Vector3.up, 10f).OrderBy(h => h.distance).ToArray();
+    RaycastHit[] hits = Physics.RaycastAll(player.transform.position, -Vector3.up, 20f).OrderBy(h => h.distance).ToArray();
     foreach(RaycastHit h in hits) {
       if(string.Compare(h.transform.tag, "Platform") == 0) {
         isPlayerOnPlatform = true;
       }
     }
-    if(!isPlayerOnPlatform) {
+    // If the ball was not released from the platform the balls color will be changed to
+    // red to indicate that the player has to throw the ball to the ground.
+    if (!isPlayerOnPlatform) {
       ball.GetComponent<Renderer>().material = cheatBallMaterial;
-      cheatStatus = true;
+      // Changes the layer of the goal to prevent going to the next level
+      goal.layer = LayerMask.NameToLayer("InvalidGoal");
     }
   }
 
   // Grabs the moveable object
   public void GrabObject(Collider col, GameObject parent, SteamVR_Controller.Device device)
   {
-    col.transform.SetParent(parent.transform);
-    col.GetComponent<Rigidbody>().isKinematic = true;
+    // Checks if the player has still grabbed an item
+    if(col.transform.parent == null) {
+      col.transform.SetParent(parent.transform);
+      col.GetComponent<Rigidbody>().isKinematic = true;
+    }
   }
 
   // Releases the moveable object at the current position
@@ -110,17 +133,22 @@ public class GamePlay : MonoBehaviour
   }
 
   // Chechs if the player has cheated and if he has collected all collectables
-  public void CheckPlayer()
+  public void HasPlayerCheated()
   {
-    // Checks if the player has cheated the steps
-    if (countCollectibles > 0) {
-      Debug.Log("PLAYER HAS CHEATED THE STEPS");
+    // Checks if the player has cheated when released the ball
+    if(string.Compare(LayerMask.LayerToName(goal.layer), "InvalidGoal") == 0) {
+      Debug.Log("PLAYER HAS NOT RELEASED THE BALL FROM THE PLATFORM");
       ResetLevel();
     }
+    // Checks if the player has collected all the stars
+    else if (countCollectibles > 0) {
+      Debug.Log("PLAYER HAS NOT COLLECTED ALL THE STARS. " + countCollectibles + " STAR NOT COLLECTED.");
+      ResetLevel();
+    }
+    // Player has not cheated in the game
     else {
       // Create a particle system for 5 sec to indicate that the ball is in the goal
-      GameObject ball = GameObject.FindGameObjectWithTag("Throwable");
-      Destroy(ball);    // Destroy the ball after entering the goal
+      GameObject.FindGameObjectWithTag("Throwable").SetActive(false);
       Instantiate(goalParticle, goal.transform.position, Quaternion.Euler(-90, 0, 0));
       StartCoroutine(DelayBeforeNextLevelLoad());
     }
