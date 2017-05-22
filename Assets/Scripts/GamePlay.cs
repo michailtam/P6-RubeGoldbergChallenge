@@ -9,13 +9,14 @@ public class GamePlay : MonoBehaviour
 {
   public GameObject goal;                   // The goal game object
   public GameObject star;                   // The star game object
-  public Transform player;                 // The current player
+  public Transform player;                  // The current player
   public ParticleSystem goalParticle;       // The particle system of the goal
   public GameObject ball;                   // The ball in the scene
   public Material ballMaterial;             // The right ball material
   public Material cheatBallMaterial;        // The color that indicates that the player has cheated
   public float throwForce = 1.5f;           // The force to throw the ball
   public int levelNumber;                   // Contains the current level number 
+  public AudioClip[] audioClip;             // The audio clip for the goal
   private Vector3 spawnPoint;               // The calculated spawn point of the ball
   private int previousStep = 0;             // Saves the previous step
   private GameObject[] allCollectables;     // All the collectables in the scene
@@ -138,17 +139,21 @@ public class GamePlay : MonoBehaviour
     // Checks if the player has cheated when released the ball
     if(string.Compare(LayerMask.LayerToName(goal.layer), "InvalidGoal") == 0) {
       Debug.Log("PLAYER HAS NOT RELEASED THE BALL FROM THE PLATFORM");
+      AudioSource.PlayClipAtPoint(audioClip[1], ball.transform.position);
       ResetLevel();
     }
     // Checks if the player has collected all the stars
     else if (countCollectibles > 0) {
       Debug.Log("PLAYER HAS NOT COLLECTED ALL THE STARS. " + countCollectibles + " STAR NOT COLLECTED.");
+      AudioSource.PlayClipAtPoint(audioClip[1], ball.transform.position);
       ResetLevel();
     }
     // Player has not cheated in the game
     else {
+      AudioSource.PlayClipAtPoint(audioClip[0], ball.transform.position);
+      
       // Create a particle system for 5 sec to indicate that the ball is in the goal
-      GameObject.FindGameObjectWithTag("Throwable").SetActive(false);
+      ball.SetActive(false);
       Instantiate(goalParticle, goal.transform.position, Quaternion.Euler(-90, 0, 0));
       StartCoroutine(DelayBeforeNextLevelLoad());
     }
