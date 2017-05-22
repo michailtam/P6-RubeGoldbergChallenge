@@ -1,0 +1,13 @@
+##### Folders and Subfolders to exclude #####
+#############################################
+Library
+Build
+Temp
+Helps
+
+
+# File Extensions to exclude #
+##############################
+*.csproj
+*.sln
+*.suo
