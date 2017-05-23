@@ -5,7 +5,7 @@ using UnityEngine;
 public class ObjectMenuManager : MonoBehaviour {
 
   public List<GameObject> objectPrefabList;  // The prefab list that contains the prefab objects
-  public int[] countInstances;
+  public int[] maxInstancesForEach;
   private List<GameObject> objectList;       // The list that contains the menu objects
   private int currentMenuObjectIndex = 0;    // The current index of the menu object 
 
@@ -46,34 +46,34 @@ public class ObjectMenuManager : MonoBehaviour {
   public void SpawnCurrentObject()
   {
     // Checks if for the current prefab it is allowed to create an additional instance
-    if (countInstances[currentMenuObjectIndex] == 0)
+    if (maxInstancesForEach[currentMenuObjectIndex] == 0)
       return;
 
-    countInstances[currentMenuObjectIndex]--; // Decreases the allowed instances
+    maxInstancesForEach[currentMenuObjectIndex]--; // Decreases the allowed instances
 
     // If it is a game object with rigidbody properties (i.e. trampoline)
-    if (string.Compare(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1).transform.name, "Trampoline") == 0) 
-    {
+    if (string.Compare(objectList[currentMenuObjectIndex].transform.name, "Trampoline") == 0) {
       // Creates a vector to instantiate under the shown prefab
       Vector3 posCreation = new Vector3(
         objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.x,
-        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.y - 0.2f,
+        objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.y,
         objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position.z);
 
-      Transform obj = Instantiate(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1),
-      posCreation,
-      objectList[currentMenuObjectIndex].transform.GetChild(1).transform.rotation);
-
+      // Create the trampoline at the position the object menu shows and rotate it vertically
+      GameObject obj = Instantiate(objectPrefabList[currentMenuObjectIndex].gameObject,
+        posCreation, Quaternion.identity);
+      obj.transform.Rotate(new Vector3(-90,0,0)); 
+      
       // Sets the physics properties of the trampoline 
-      objectList[currentMenuObjectIndex].transform.GetChild(1).GetComponent<Collider>().isTrigger = true;
-      Rigidbody rig = obj.gameObject.GetComponent<Rigidbody>();
+      obj.GetComponent<Collider>().isTrigger = true;
+      Rigidbody rig = obj.GetComponent<Rigidbody>();
       rig.useGravity = true;
       rig.isKinematic = false;
-      objectList[currentMenuObjectIndex].transform.GetChild(1).GetComponent<Collider>().isTrigger = false;
+      obj.GetComponent<Collider>().isTrigger = false;
     }
     else 
     {
-      Instantiate(objectPrefabList[currentMenuObjectIndex].transform.GetChild(1),
+      Instantiate(objectPrefabList[currentMenuObjectIndex].gameObject,
         objectList[currentMenuObjectIndex].transform.GetChild(1).transform.position,
         objectList[currentMenuObjectIndex].transform.GetChild(1).transform.rotation);
     }
