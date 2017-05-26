@@ -48,9 +48,6 @@ public class ControllerInputManager : MonoBehaviour
   private bool hasSwipedLeft;             // Prevents from unwanted swiping to the left 
   private bool hasSwipedRight;            // Prevents from unwanted swiping to the right
 
-  // Tutorial UI
-  public GameObject tutorialUI;           // The tutorial UI which explains the gameplay
-
 
   // Use this for initialization
   void Start() {
@@ -74,20 +71,6 @@ public class ControllerInputManager : MonoBehaviour
       Movement();         // Manages the movement with the left controller
     if(device.index == indexRight)
       ManageObjectMenu(); // Manages the menu objects with the right controller
-    DisplayTutorialUI();  // Displays or hides the tutorial UI
-  }
-
-  // Displays or hides the tutorial UI
-  private void DisplayTutorialUI()
-  {
-    if(device.GetPressDown(SteamVR_Controller.ButtonMask.Grip)) {
-      if (tutorialUI.activeInHierarchy) {
-        tutorialUI.SetActive(false);
-      }
-      else {
-        tutorialUI.SetActive(true);
-      }
-    }
   }
 
   // Manages the object menu
