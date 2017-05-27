@@ -32,6 +32,7 @@ public class GamePlay : MonoBehaviour
     // Gets the amount of collectibles;
     allCollectables = GameObject.FindGameObjectsWithTag("Collectable");
     countCollectibles = allCollectables.Length;
+    
     foreach(GameObject go in allCollectables) {
       go.SetActive(true);
     }
@@ -60,6 +61,7 @@ public class GamePlay : MonoBehaviour
     ResetCollectables();    // Creates again all collectables
     goal.layer = LayerMask.NameToLayer("ValidGoal");  // Resets the layer of the goal
     goal.GetComponent<Goal>().hasEnteredGoal = false;
+    countCollectibles = allCollectables.Length;
   }
 
   // Resets the balls position (returns to the pedastal)
@@ -151,7 +153,8 @@ public class GamePlay : MonoBehaviour
     // Player has not cheated in the game
     else {
       AudioSource.PlayClipAtPoint(audioClip[0], ball.transform.position);
-      
+
+      Debug.Log("COLECTABLES: " + countCollectibles);
       // Create a particle system for 5 sec to indicate that the ball is in the goal
       ball.SetActive(false);
       Instantiate(goalParticle, goal.transform.position, Quaternion.Euler(-90, 0, 0));
