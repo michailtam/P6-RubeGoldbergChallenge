@@ -14,6 +14,7 @@ public class GamePlay : MonoBehaviour
   public GameObject ball;                   // The ball in the scene
   public Material ballMaterial;             // The right ball material
   public Material cheatBallMaterial;        // The color that indicates that the player has cheated
+  public GameObject gameOverDialog;         // The dialog which indicates the successfull end of the game
   public float throwForce = 1.5f;           // The force to throw the ball
   public int levelNumber;                   // Contains the current level number 
   public AudioClip[] audioClip;             // The audio clip for the goal
@@ -26,6 +27,10 @@ public class GamePlay : MonoBehaviour
   // Use this for initialization
   void Start()
   {
+    // Hide the game over dialog if the current level is the last
+    if(levelNumber == 4)
+      gameOverDialog.SetActive(false);
+
     // Gets the balls start position on the pedastal
     ballStartPosition = ball.transform.position;
 
@@ -140,13 +145,13 @@ public class GamePlay : MonoBehaviour
   {
     // Checks if the player has cheated when released the ball
     if(string.Compare(LayerMask.LayerToName(goal.layer), "InvalidGoal") == 0) {
-      Debug.Log("PLAYER HAS NOT RELEASED THE BALL FROM THE PLATFORM");
+      //Debug.Log("PLAYER HAS NOT RELEASED THE BALL FROM THE PLATFORM");
       AudioSource.PlayClipAtPoint(audioClip[1], ball.transform.position);
       ResetLevel();
     }
     // Checks if the player has collected all the stars
     else if (countCollectibles > 0) {
-      Debug.Log("PLAYER HAS NOT COLLECTED ALL THE STARS. " + countCollectibles + " STAR NOT COLLECTED.");
+      //Debug.Log("PLAYER HAS NOT COLLECTED ALL THE STARS. " + countCollectibles + " STAR NOT COLLECTED.");
       AudioSource.PlayClipAtPoint(audioClip[1], ball.transform.position);
       ResetLevel();
     }
@@ -154,11 +159,17 @@ public class GamePlay : MonoBehaviour
     else {
       AudioSource.PlayClipAtPoint(audioClip[0], ball.transform.position);
 
-      Debug.Log("COLECTABLES: " + countCollectibles);
       // Create a particle system for 5 sec to indicate that the ball is in the goal
       ball.SetActive(false);
       Instantiate(goalParticle, goal.transform.position, Quaternion.Euler(-90, 0, 0));
-      StartCoroutine(DelayBeforeNextLevelLoad());
+
+      // If the current scene is the last level
+      if(levelNumber == 4) {
+        gameOverDialog.SetActive(true);
+        StartCoroutine(DelayBeforeNextLevelLoad());
+      } else {
+        StartCoroutine(DelayBeforeNextLevelLoad());
+      }
     }
   }
 
@@ -181,6 +192,9 @@ public class GamePlay : MonoBehaviour
         break;
       case 3:
         SteamVR_LoadLevel.Begin("Level4", false, 2f);
+        break;
+      case 4:
+        SteamVR_LoadLevel.Begin("Level1", false, 5f);
         break;
       default:
         Debug.Log("ERROR: Undefined level number");
